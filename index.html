@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Using normal JavaScript(I can do this in React as well)</title>
+</head>
+<body>
+    <script>
+        //In react I will use useEffect hook for fething the data from API and for pagination useState hook will be used
+async function fetchProjects() {
+  const apiUrl = "https://raw.githubusercontent.com/saaslabsco/frontend-assignment/refs/heads/master/frontend-assignment.json";
+  console.log(apiUrl)
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    if (Array.isArray(data)) {
+      renderTable(data);
+    } else {
+      console.error("Unexpected data format", data);
+    }
+  } catch (error) {
+    console.error("Error fetching data: ", error);
+  }
+}
+
+function renderTable(data) {
+  const tableContainer = document.getElementById("table-container");
+  const paginationContainer = document.getElementById("pagination");
+  const recordsPerPage = 5;
+  let currentPage = 1;
+  
+  function renderPage(page) {
+    currentPage = page;
+    const start = (page - 1) * recordsPerPage;
+    const end = start + recordsPerPage;
+    const paginatedData = data.slice(start, end);
+
+    const rows = paginatedData
+      .map((project, index) => {
+        const percentageFunded = project["percentage.funded"];
+        return `
+          <tr>
+            <td>${start + index + 1}</td>
+            <td>${percentageFunded}%</td>
+            <td>$${project["amt.pledged"].toLocaleString()}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    document.getElementById("table-body").innerHTML = rows;
+
+    const totalPages = Math.ceil(data.length / recordsPerPage);
+    paginationContainer.innerHTML = Array.from({ length: totalPages }, (_, i) => `
+      <button class="pagination-btn ${i + 1 === page ? 'active' : ''}" data-page="${i + 1}">
+        ${i + 1}
+      </button>
+    `).join("");
+
+    document.querySelectorAll(".pagination-btn").forEach((button) => {
+      button.addEventListener("click", () => renderPage(Number(button.dataset.page)));
+    });
+  }
+
+  renderPage(currentPage);
+}
+
+function init() {
+  document.body.innerHTML = `
+    <div class="app-container">
+      <h1>Table</h1>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>S.No.</th>
+            <th>Percentage Funded</th>
+            <th>Amount Pledged</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div id="pagination" class="pagination"></div>
+    </div>
+  `;
+  fetchProjects();
+}
+
+const style = document.createElement("style");
+style.textContent = `
+  .app-container {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 20px auto;
+    text-align: center;
+  }
+
+  h1 {
+    color: #333;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+
+  .data-table th, .data-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+  }
+
+  .data-table th {
+    background-color: #f4f4f4;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 20px;
+  }
+
+  .pagination-btn {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+  }
+
+  .pagination-btn.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+  }
+`;
+document.head.appendChild(style);
+
+function runTests() {
+  console.log("Running tests...");
+
+  fetchProjects()
+    .then(() => console.log("Test passed: Data fetched successfully"))
+    .catch(() => console.error("Test failed: Error fetching data"));
+
+  const testData = Array.from({ length: 15 }, (_, i) => ({ "percentage.funded": i * 10, "amt.pledged": i * 100 }));
+  renderTable(testData);
+  const paginationButtons = document.querySelectorAll(".pagination-btn");
+  if (paginationButtons.length === 3) {
+    console.log("Test passed: Pagination buttons generated correctly");
+  } else {
+    console.error("Test failed: Incorrect number of pagination buttons");
+  }
+}
+
+init();
+runTests();
+
+
+
+    </script>
+</body>
+</html>
